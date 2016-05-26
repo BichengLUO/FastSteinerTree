@@ -153,8 +153,8 @@ public class FastSteinerTree {
 
     public void removeNonSteinerLeaves() {
         int[] removeNodes = new int[steinerTree.length];
-        for (int i = 0; i < inputSteinerPoints.length; i++) {
-            removeNodes[inputSteinerPoints[i]] = 1;
+        for (int id : inputSteinerPoints) {
+            removeNodes[id] = 1;
         }
         int cleanCount;
         do {
