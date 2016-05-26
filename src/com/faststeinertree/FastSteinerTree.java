@@ -13,23 +13,31 @@ public class FastSteinerTree {
     private int[][] steinerTree;
     private HashMap<Edge, List<Edge>> edgeMap;
 
-    public static int[][] minimalSpanningTree(int[][] graph) {
-        
+    public static int[][] prim(int[][] graph) {
+
         return graph;
     }
 
     public static ShortestPathWithDist dijkstra(int[][] graph, int source, int target) {
         int[] d = new int[graph.length];
         int[] previous = new int[graph.length];
-        PriorityQueue<dNode> queue = new PriorityQueue<>(10, new dNodeComparator());
+        HashSet<Integer> nodes = new HashSet<>();
         for (int i = 0; i < graph.length; i++) {
             d[i] = Integer.MAX_VALUE;
             previous[i] = -1;
-            queue.add(new dNode(i, d[i]));
+            nodes.add(i);
         }
         d[source] = 0;
-        while (!queue.isEmpty()) {
-            int u = queue.poll().id;
+        while (!nodes.isEmpty()) {
+            int u = -1;
+            int min_dist = Integer.MAX_VALUE;
+            for (int node : nodes) {
+                if (d[node] < min_dist) {
+                    min_dist = d[node];
+                    u = node;
+                }
+            }
+            nodes.remove(u);
             if (u == target) {
                 break;
             }
@@ -63,9 +71,9 @@ public class FastSteinerTree {
 
     public int[][] execute() {
         constructSteinerPointsGraph();
-        steinerPointsGraph = minimalSpanningTree(steinerPointsGraph);
+        steinerPointsGraph = prim(steinerPointsGraph);
         constructSubgraph();
-        steinerTree = minimalSpanningTree(steinerTree);
+        steinerTree = prim(steinerTree);
         removeNonsteinerNodes();
         return steinerTree;
     }
@@ -75,7 +83,7 @@ public class FastSteinerTree {
         edgeMap = new HashMap<>();
         for (int i = 0; i < inputSteinerPoints.length; i++) {
             for (int j = i + 1; j < inputSteinerPoints.length; j++) {
-                ShortestPathWithDist spwd = dijkstra(inputGraph, i, j);
+                ShortestPathWithDist spwd = dijkstra(inputGraph, inputSteinerPoints[i], inputSteinerPoints[j]);
                 steinerPointsGraph[i][j] = steinerPointsGraph[j][i] = spwd.distance;
                 edgeMap.put(new Edge(i, j), spwd.shortestPath);
             }
