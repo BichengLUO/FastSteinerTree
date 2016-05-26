@@ -14,8 +14,31 @@ public class FastSteinerTree {
     private HashMap<Edge, List<Edge>> edgeMap;
 
     public static int[][] prim(int[][] graph) {
-
-        return graph;
+        int[][] mst = new int[graph.length][graph.length];
+        HashSet<Integer> vSet = new HashSet<>();
+        vSet.add(0);
+        while (vSet.size() < graph.length) {
+            int minWeight = Integer.MAX_VALUE;
+            Edge mwe = new Edge(-1, -1);
+            for (int i = 0; i < graph.length; i++) {
+                for (int j = i + 1; j < graph.length; j++) {
+                    if (mst[i][j] == 0) {
+                        boolean iInJOut = vSet.contains(i) && !vSet.contains(j);
+                        boolean iOutJIn = !vSet.contains(i) && vSet.contains(j);
+                        boolean lessWeight = graph[i][j] < minWeight;
+                        if ((iInJOut || iOutJIn) && lessWeight) {
+                            minWeight = graph[i][j];
+                            mwe.setNode1(i);
+                            mwe.setNode2(j);
+                        }
+                    }
+                }
+            }
+            vSet.add(mwe.getNode1());
+            vSet.add(mwe.getNode2());
+            mst[mwe.getNode1()][mwe.getNode2()] = mst[mwe.getNode2()][mwe.getNode1()] = minWeight;
+        }
+        return mst;
     }
 
     public static ShortestPathWithDist dijkstra(int[][] graph, int source, int target) {
