@@ -15,14 +15,27 @@ public class FastSteinerTree {
 
     public static int[][] prim(int[][] graph) {
         int[][] mst = new int[graph.length][graph.length];
+        HashSet<Integer> wholeSet = new HashSet<>();
         HashSet<Integer> vSet = new HashSet<>();
-        vSet.add(0);
-        while (vSet.size() < graph.length) {
+
+        int start = 0;
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = i + 1; j < graph.length; j++) {
+                if (graph[i][j] != 0) {
+                    wholeSet.add(i);
+                    wholeSet.add(j);
+                    start = i;
+                }
+            }
+        }
+
+        vSet.add(start);
+        while (vSet.size() < wholeSet.size()) {
             int minWeight = Integer.MAX_VALUE;
             Edge mwe = new Edge(-1, -1);
             for (int i = 0; i < graph.length; i++) {
                 for (int j = i + 1; j < graph.length; j++) {
-                    if (mst[i][j] == 0) {
+                    if (mst[i][j] == 0 && graph[i][j] != 0) {
                         boolean iInJOut = vSet.contains(i) && !vSet.contains(j);
                         boolean iOutJIn = !vSet.contains(i) && vSet.contains(j);
                         boolean lessWeight = graph[i][j] < minWeight;
@@ -34,9 +47,12 @@ public class FastSteinerTree {
                     }
                 }
             }
-            vSet.add(mwe.getNode1());
-            vSet.add(mwe.getNode2());
-            mst[mwe.getNode1()][mwe.getNode2()] = mst[mwe.getNode2()][mwe.getNode1()] = minWeight;
+            if (minWeight != Integer.MAX_VALUE) {
+                vSet.add(mwe.getNode1());
+                vSet.add(mwe.getNode2());
+                mst[mwe.getNode1()][mwe.getNode2()] = mst[mwe.getNode2()][mwe.getNode1()] = minWeight;
+                //System.out.printf("[Prim] Add edge (%d, %d)\n", mwe.getNode1(), mwe.getNode2());
+            }
         }
         return mst;
     }
@@ -79,8 +95,7 @@ public class FastSteinerTree {
             u = previous[u];
         }
         Collections.reverse(shortestPath);
-        ShortestPathWithDist result = new ShortestPathWithDist(shortestPath, d[target]);
-        return result;
+        return new ShortestPathWithDist(shortestPath, d[target]);
     }
 
     public static void addEdge(int[][] graph, Edge e, int dist) {
@@ -95,9 +110,13 @@ public class FastSteinerTree {
     public int[][] execute() {
         constructSteinerPointsGraph();
         steinerPointsGraph = prim(steinerPointsGraph);
-        constructSubgraph();
+        constructSubGraph();
+        //printGraphEdges(steinerTree);
+
         steinerTree = prim(steinerTree);
-        removeNonsteinerNodes();
+        removeNonSteinerLeaves();
+        //printGraphEdges(steinerTree);
+
         return steinerTree;
     }
 
@@ -113,12 +132,67 @@ public class FastSteinerTree {
         }
     }
 
-    public void constructSubgraph() {
-
+    public void constructSubGraph() {
+        steinerTree = new int[inputGraph.length][inputGraph.length];
+        for (int i = 0; i < steinerPointsGraph.length; i++) {
+            for (int j = i + 1; j < steinerPointsGraph.length; j++) {
+                if (steinerPointsGraph[i][j] != 0) {
+                    List<Edge> shortestPath = edgeMap.get(new Edge(i, j));
+                    if (shortestPath == null) {
+                        System.out.println("[Error] Can't find in edgeMap");
+                    }
+                    for (Edge e : shortestPath) {
+                        int ei = e.getNode1();
+                        int ej = e.getNode2();
+                        steinerTree[ei][ej] = steinerTree[ej][ei] = inputGraph[ei][ej];
+                    }
+                }
+            }
+        }
     }
 
-    public void removeNonsteinerNodes() {
+    public void removeNonSteinerLeaves() {
+        int[] removeNodes = new int[steinerTree.length];
+        for (int i = 0; i < inputSteinerPoints.length; i++) {
+            removeNodes[inputSteinerPoints[i]] = 1;
+        }
+        int cleanCount;
+        do {
+            cleanCount = 0;
+            for (int i = 0; i < steinerTree.length; i++) {
+                if (removeNodes[i] == 0) {
+                    int degree = 0;
+                    int j;
+                    for (j = 0; j < steinerTree.length; j++) {
+                        if (steinerTree[i][j] != 0) {
+                            degree++;
+                        }
+                    }
+                    if (degree == 1) {
+                        removeNodes[i] = -1;
+                        steinerTree[i][j] = steinerTree[j][i] = 0;
+                        cleanCount++;
+                    }
+                }
+            }
+        } while (cleanCount > 0);
+    }
 
+    public static void printGraphEdges(int[][] graph) {
+        int edgeCount = 0;
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = i + 1; j < graph.length; j++) {
+                if (graph[i][j] > 0) {
+                    System.out.printf("(%d, %d) ", i, j);
+                    edgeCount++;
+                }
+            }
+        }
+        if (edgeCount == 0) {
+            System.out.println("Empty graph!");
+        } else {
+            System.out.println();
+        }
     }
 
     public static void main(String[] args) {
@@ -136,8 +210,14 @@ public class FastSteinerTree {
         addEdge(graph, new Edge(2, 3), 18);
         addEdge(graph, new Edge(3, 4), 4);
 
+        System.out.println("Input Graph:");
+        printGraphEdges(graph);
+
         FastSteinerTree fst = new FastSteinerTree(graph, new int[]{0 ,1, 2, 3});
         int[][] st = fst.execute();
+
+        System.out.println("Steiner Tree:");
+        printGraphEdges(st);
     }
 
 }

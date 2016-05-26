@@ -17,6 +17,23 @@ public class Edge {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Edge edge = (Edge) o;
+
+        if (node1 != edge.node1) return false;
+        return node2 == edge.node2;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return 100 * node1 + node2;
+    }
+
     public int getNode1() {
         return node1;
     }
