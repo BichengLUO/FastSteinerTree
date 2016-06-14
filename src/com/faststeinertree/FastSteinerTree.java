@@ -13,15 +13,18 @@ public class FastSteinerTree {
     private int[][] steinerTree;
     private HashMap<Edge, List<Edge>> edgeMap;
 
+    public static final int NOT_LINK = -1;
+
     public static int[][] prim(int[][] graph) {
         int[][] mst = new int[graph.length][graph.length];
+        initGraph(mst);
         HashSet<Integer> wholeSet = new HashSet<>();
         HashSet<Integer> vSet = new HashSet<>();
 
         int start = 0;
         for (int i = 0; i < graph.length; i++) {
             for (int j = i + 1; j < graph.length; j++) {
-                if (graph[i][j] != 0) {
+                if (graph[i][j] != NOT_LINK) {
                     wholeSet.add(i);
                     wholeSet.add(j);
                     start = i;
@@ -35,7 +38,7 @@ public class FastSteinerTree {
             Edge mwe = new Edge(-1, -1);
             for (int i = 0; i < graph.length; i++) {
                 for (int j = i + 1; j < graph.length; j++) {
-                    if (mst[i][j] == 0 && graph[i][j] != 0) {
+                    if (mst[i][j] == NOT_LINK && graph[i][j] != NOT_LINK) {
                         boolean iInJOut = vSet.contains(i) && !vSet.contains(j);
                         boolean iOutJIn = !vSet.contains(i) && vSet.contains(j);
                         boolean lessWeight = graph[i][j] < minWeight;
@@ -82,7 +85,7 @@ public class FastSteinerTree {
             }
             for (int i = 0; i < graph.length; i++)
             {
-                if (graph[u][i] > 0 && d[i] > d[u] + graph[u][i]) {
+                if (graph[u][i] != NOT_LINK && d[i] > d[u] + graph[u][i]) {
                     d[i] = d[u] + graph[u][i];
                     previous[i] = u;
                 }
@@ -96,6 +99,14 @@ public class FastSteinerTree {
         }
         Collections.reverse(shortestPath);
         return new ShortestPathWithDist(shortestPath, d[target]);
+    }
+
+    public static void initGraph(int[][] graph) {
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph.length; j++) {
+                graph[i][j] = NOT_LINK;
+            }
+        }
     }
 
     public static void addEdge(int[][] graph, Edge e, int dist) {
@@ -122,6 +133,7 @@ public class FastSteinerTree {
 
     public void constructSteinerPointsGraph() {
         steinerPointsGraph = new int[inputSteinerPoints.length][inputSteinerPoints.length];
+        initGraph(steinerPointsGraph);
         edgeMap = new HashMap<>();
         for (int i = 0; i < inputSteinerPoints.length; i++) {
             for (int j = i + 1; j < inputSteinerPoints.length; j++) {
@@ -134,9 +146,10 @@ public class FastSteinerTree {
 
     public void constructSubGraph() {
         steinerTree = new int[inputGraph.length][inputGraph.length];
+        initGraph(steinerTree);
         for (int i = 0; i < steinerPointsGraph.length; i++) {
             for (int j = i + 1; j < steinerPointsGraph.length; j++) {
-                if (steinerPointsGraph[i][j] != 0) {
+                if (steinerPointsGraph[i][j] != -1) {
                     List<Edge> shortestPath = edgeMap.get(new Edge(i, j));
                     if (shortestPath == null) {
                         System.out.println("[Error] Can't find in edgeMap");
@@ -164,13 +177,13 @@ public class FastSteinerTree {
                     int degree = 0;
                     int j;
                     for (j = 0; j < steinerTree.length; j++) {
-                        if (steinerTree[i][j] != 0) {
+                        if (steinerTree[i][j] != NOT_LINK) {
                             degree++;
                         }
                     }
                     if (degree == 1) {
                         removeNodes[i] = -1;
-                        steinerTree[i][j] = steinerTree[j][i] = 0;
+                        steinerTree[i][j] = steinerTree[j][i] = NOT_LINK;
                         cleanCount++;
                     }
                 }
@@ -182,7 +195,7 @@ public class FastSteinerTree {
         int edgeCount = 0;
         for (int i = 0; i < graph.length; i++) {
             for (int j = i + 1; j < graph.length; j++) {
-                if (graph[i][j] > 0) {
+                if (graph[i][j] != NOT_LINK) {
                     System.out.printf("(%d, %d) ", i, j);
                     edgeCount++;
                 }
@@ -197,6 +210,7 @@ public class FastSteinerTree {
 
     public static void main(String[] args) {
         int[][] graph = new int[9][9];
+        initGraph(graph);
         addEdge(graph, new Edge(0, 1), 20);
         addEdge(graph, new Edge(0, 8), 2);
         addEdge(graph, new Edge(7, 8), 1);
